@@ -18,10 +18,10 @@
    .cell {
   width: 40px;
   height: 40px;
-  border-top: 1px solid #ccc;
-  border-left: 1px solid #ccc;
-  border-bottom: 1px solid #ccc;
-  border-right: 1px solid #ccc;
+  border-top: 2px solid #ccc;
+  border-left: 2px solid #ccc;
+  border-bottom: 2px solid #ccc;
+  border-right: 2px solid #ccc;
   background: white;
 }
     /* 設定モーダル */
@@ -61,6 +61,12 @@
 <body>
   <h1>シミュレーション盤面</h1>
   <button id="settingsBtn">設定</button>
+  <style>
+  body {
+  display: flex;
+  justify-content: flex-end; /* 右端に寄せる */
+  padding: 20px;
+}
   <div id="board"></div>
 
   <!-- モーダル -->
