@@ -2,34 +2,55 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <title>101シミュレーション盤面</title>
+  <title>シミュレーション統合版</title>
   <style>
     body {
       font-family: sans-serif;
-      text-align: center;
       background: #fafafa;
+      margin: 20px;
     }
+
+    /* 設定ボタン */
+    #settingsBtn {
+      float: right;
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #settingsBtn:hover { background: #45a049; }
+
+    /* 盤面 */
     #board {
       display: grid;
-      margin: 20px auto;
+      margin: 60px auto 20px auto;
       border: 2px solid #333;
-      width: fit-content;
     }
-   .cell {
-  width: 40px;
-  height: 40px;
-  border-top: 2px solid #ccc;
-  border-left: 2px solid #ccc;
-  border-bottom: 2px solid #ccc;
-  border-right: 2px solid #ccc;
-  background: white;
-}
-    /* 設定モーダル */
+    .cell {
+      width: 50px;
+      height: 50px;
+      border: 1px solid #ccc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 20px;
+      background: white;
+    }
+    .red { background: #f88; }
+    .blue { background: #88f; color: white; }
+
+    /* モーダル */
     #modal {
       display: none;
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      top:0; left:0;
+      width:100%; height:100%;
       background: rgba(0,0,0,0.5);
       justify-content: center;
       align-items: center;
@@ -42,25 +63,20 @@
       position: relative;
       width: 300px;
     }
-    #modalContent h2 {
-      margin-top: 0;
-    }
+    #modalContent h2 { margin-top: 0; }
     #closeBtn {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      top:10px; right:10px;
       cursor: pointer;
       font-weight: bold;
       color: red;
     }
-    #modal button {
-      margin-top: 10px;
-    }
+    #modal button { margin-top: 10px; }
   </style>
 </head>
 <body>
-  <h1>シミュレーション盤面</h1>
   <button id="settingsBtn">設定</button>
+  <h1>シミュレーション統合版</h1>
   <div id="board"></div>
 
   <!-- モーダル -->
@@ -84,19 +100,44 @@
     const cancelBtn = document.getElementById("cancelBtn");
     const boardSizeInput = document.getElementById("boardSize");
 
-    // 盤面生成
+    let moveCount = 0;           // コマの番号
+    let currentTeam = "red";     // 赤からスタート
+    let placedPieces = [];       // 配置履歴
+    let boardSize = parseInt(boardSizeInput.value);
+
+    // 盤面作成
     function createBoard(size) {
       board.innerHTML = "";
-      board.style.gridTemplateColumns = `repeat(${size}, 40px)`;
-      for (let i = 0; i < size * size; i++) {
+      board.style.gridTemplateColumns = `repeat(${size}, 50px)`;
+      for(let i=0;i<size*size;i++){
         const cell = document.createElement("div");
         cell.className = "cell";
+        cell.dataset.index = i;
         board.appendChild(cell);
+
+        cell.addEventListener("click", () => {
+          if(cell.dataset.piece) return; // すでに置かれている場合は無視
+          moveCount++;
+          cell.dataset.piece = currentTeam;
+          cell.dataset.number = moveCount;
+          cell.dataset.type = "normal";
+          cell.classList.add(currentTeam);
+          cell.textContent = moveCount;
+
+          placedPieces.push({
+            cellIndex: i,
+            team: currentTeam,
+            number: moveCount,
+            type: "normal"
+          });
+
+          currentTeam = currentTeam === "red" ? "blue" : "red";
+        });
       }
     }
 
     // 初期盤面
-    createBoard(5);
+    createBoard(boardSize);
 
     // モーダル開閉
     settingsBtn.onclick = () => modal.style.display = "flex";
@@ -106,8 +147,12 @@
     // 完了ボタンで盤面更新
     applyBtn.onclick = () => {
       const newSize = parseInt(boardSizeInput.value);
-      if (newSize > 0) {
-        createBoard(newSize);
+      if(newSize > 0){
+        boardSize = newSize;
+        moveCount = 0;
+        currentTeam = "red";
+        placedPieces = [];
+        createBoard(boardSize);
         modal.style.display = "none";
       } else {
         alert("1以上の数値を入力してください");
