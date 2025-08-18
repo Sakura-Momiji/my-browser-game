@@ -2,12 +2,13 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <title>シミュレーション統合版</title>
+  <title>シミュレーション統合版 改良</title>
   <style>
     body {
       font-family: sans-serif;
       background: #fafafa;
       margin: 20px;
+      text-align: center;
     }
 
     /* 設定ボタン */
@@ -27,13 +28,11 @@
     /* 盤面 */
     #board {
       display: grid;
-      margin: 60px auto 20px auto;
-      border: 2px solid #333;
+      margin: 60px auto 20px auto; /* 中央に配置 */
     }
     .cell {
       width: 50px;
       height: 50px;
-      border: 1px solid #ccc;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -41,6 +40,7 @@
       font-weight: bold;
       font-size: 20px;
       background: white;
+      /* borderは消す */
     }
     .red { background: #f88; }
     .blue { background: #88f; color: white; }
@@ -76,7 +76,7 @@
 </head>
 <body>
   <button id="settingsBtn">設定</button>
-  <h1>シミュレーション統合版</h1>
+  <h1>シミュレーション統合版 改良</h1>
   <div id="board"></div>
 
   <!-- モーダル -->
@@ -100,15 +100,15 @@
     const cancelBtn = document.getElementById("cancelBtn");
     const boardSizeInput = document.getElementById("boardSize");
 
-    let moveCount = 0;           // コマの番号
-    let currentTeam = "red";     // 赤からスタート
-    let placedPieces = [];       // 配置履歴
     let boardSize = parseInt(boardSizeInput.value);
+    let redCount = 0;
+    let blueCount = 0;
+    let placedPieces = []; // 配置履歴
 
-    // 盤面作成
     function createBoard(size) {
       board.innerHTML = "";
       board.style.gridTemplateColumns = `repeat(${size}, 50px)`;
+
       for(let i=0;i<size*size;i++){
         const cell = document.createElement("div");
         cell.className = "cell";
@@ -117,26 +117,29 @@
 
         cell.addEventListener("click", () => {
           if(cell.dataset.piece) return; // すでに置かれている場合は無視
-          moveCount++;
-          cell.dataset.piece = currentTeam;
-          cell.dataset.number = moveCount;
+
+          // 置く色を選択
+          const team = prompt("コマの色を選択してください (red/blue):", "red");
+          if(team !== "red" && team !== "blue") return;
+
+          let number = team === "red" ? ++redCount : ++blueCount;
+
+          cell.dataset.piece = team;
+          cell.dataset.number = number;
           cell.dataset.type = "normal";
-          cell.classList.add(currentTeam);
-          cell.textContent = moveCount;
+          cell.classList.add(team);
+          cell.textContent = number;
 
           placedPieces.push({
             cellIndex: i,
-            team: currentTeam,
-            number: moveCount,
+            team: team,
+            number: number,
             type: "normal"
           });
-
-          currentTeam = currentTeam === "red" ? "blue" : "red";
         });
       }
     }
 
-    // 初期盤面
     createBoard(boardSize);
 
     // モーダル開閉
@@ -144,13 +147,12 @@
     closeBtn.onclick = () => modal.style.display = "none";
     cancelBtn.onclick = () => modal.style.display = "none";
 
-    // 完了ボタンで盤面更新
     applyBtn.onclick = () => {
       const newSize = parseInt(boardSizeInput.value);
       if(newSize > 0){
         boardSize = newSize;
-        moveCount = 0;
-        currentTeam = "red";
+        redCount = 0;
+        blueCount = 0;
         placedPieces = [];
         createBoard(boardSize);
         modal.style.display = "none";
