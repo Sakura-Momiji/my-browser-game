@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
-<title>シミュレーション（統合版）101</title>
+<title>シミュレーション（統合版）102</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   :root{
@@ -586,26 +586,6 @@ function planMove(id, x, y){
 }
 
   // 仮移動のキャンセル
-  function cancelPreview(){
-  if(previewCell){
-    previewCell.textContent = "";
-    previewCell.classList.remove(movingPiece.color);
-    previewCell = null;
-  }
-  moveMode = false;
-  movingPiece = null;
-  moveEndBtn.disabled = true;
-  clearHighlights();
-  document.getElementById("pieceInfo").textContent = "";
-}
-
-  cell.onclick = () => handleCellClick(cell);
-cell.ondblclick = () => {
-  // ダブルクリック時にキャンセル
-  if(movingPiece && cell === movingPiece.cell){
-    cancelPreview();
-  }
-};
 
 
 function commitMoves(){
