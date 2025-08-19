@@ -464,7 +464,7 @@ function startGame(){
   if(state.phase!==0) return;
   pushHistory(); // 0→1 へ移る前のスナップショット（Undo用）
   state.phase = 1; state.team='red'; state.turn = 1;
-  for(const p of Object.values(state.pieces)){ p.moved=false; p.plan=null; }
+  for(const p of Object.values(state.pieces)){ p.moved=true; p.plan=null; }
   state.arrows = [];
   renderAll();
 }
