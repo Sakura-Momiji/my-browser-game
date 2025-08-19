@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
-<title>シミュレーション（統合版）104</title>
+<title>シミュレーション（統合版）105</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   :root{
@@ -496,7 +496,7 @@ function clearSelection(){
   renderBoardHighlights();
 }
 
-/* 可動範囲：同一ターンの仮移動先（plan）には入れない。ただしリスポーン地形は例外で可 */
+/* 可動範囲：同一ターンの仮移動先（plan）には入れない。 */
 function computeReachable(id){
   reachable.clear();
   const p = pieceById(id); if(!p) return;
@@ -521,15 +521,14 @@ function computeReachable(id){
       if(c.terrain==='abyss') continue;
 
       const alliesHere = c.pieces.map(id=>pieceById(id)).filter(pp=>pp && pp.team===p.team);
-      // const isAnyRespawn = isRespawnTerrain(c.terrain); //リスポのみ重複可能な設定
 
-      // 味方居座りは原則不可。ただしリスポーン（赤/青どちらでも）なら許可（多重OK）
-      if(alliesHere.length && !isAnyRespawn) {
+      // 味方がすでに居る場所には入れない（リスポーンでも不可）
+      if(alliesHere.length) {
         continue;
       }
 
-      // 他コマの仮移動先は不可（敵味方問わず）。ただしリスポーン地形なら許可。
-      if(plannedSet.has(k) && !isAnyRespawn) {
+      // 他コマの仮移動先は不可（敵味方問わず、リスポーンでも不可）
+      if(plannedSet.has(k)) {
         continue;
       }
 
