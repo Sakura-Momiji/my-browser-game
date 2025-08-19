@@ -2,9 +2,10 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<title>シミュレーション準備段階</title>
+<title>シミュレーション ステップ2</title>
 <style>
   body { font-family: sans-serif; text-align: center; background: #fafafa; }
+  #info { margin: 10px; }
   #board {
     display: grid;
     margin: 20px auto;
@@ -20,8 +21,7 @@
     font-size: 12px;
     position: relative;
   }
-  .label-x { position: absolute; top: -15px; left: 2px; font-size: 10px; color: #555; }
-  .label-y { position: absolute; left: -15px; top: 2px; font-size: 10px; color: #555; }
+  .highlight { background: yellow !important; }
   .red { background: #f88; }
   .blue { background: #88f; color: white; }
   .abyss { background: black; }
@@ -41,8 +41,14 @@
 </style>
 </head>
 <body>
-  <h1>シミュレーション準備段階（ステップ1）</h1>
+  <h1>シミュレーション ステップ2</h1>
+  <div id="info">
+    <span id="turnInfo">準備段階</span>
+    <span id="phaseInfo"></span>
+  </div>
   <button id="settingsBtn">設定</button>
+  <button id="startBtn">ゲーム開始</button>
+  <button id="moveEndBtn" disabled>移動完了</button>
   <div id="board"></div>
 
   <!-- 配置モーダル -->
@@ -107,9 +113,18 @@
     const gimmickType = document.getElementById("gimmickType");
     const respawnColor = document.getElementById("respawnColor");
     const applyPlace = document.getElementById("applyPlace");
+    const turnInfo = document.getElementById("turnInfo");
+    const phaseInfo = document.getElementById("phaseInfo");
+    const startBtn = document.getElementById("startBtn");
+    const moveEndBtn = document.getElementById("moveEndBtn");
 
     let boardSize = 5;
     let selectedCell = null;
+    let gamePhase = 0; // 0=準備, 1=赤ターン, 2=青ターン, 3=赤ターン…
+    let currentTeam = "red";
+    let moveMode = false;
+    let movingPiece = null;
+    let moveRange = 3; // 仮：移動距離は3固定
 
     function createBoard(size){
       board.innerHTML = "";
@@ -121,24 +136,35 @@
           cell.dataset.x = x;
           cell.dataset.y = y;
 
-          // 座標ラベル
-          if(y===0){
-            const lx = document.createElement("span");
-            lx.className="label-x";
-            lx.textContent = numToCol(x);
-            cell.appendChild(lx);
-          }
-          if(x===0){
-            const ly = document.createElement("span");
-            ly.className="label-y";
-            ly.textContent = y+1;
-            cell.appendChild(ly);
-          }
-
           cell.addEventListener("click", () => {
-            selectedCell = cell;
-            pieceName.value = "";
-            placeModal.style.display="flex";
+            if(gamePhase===0){
+              // 配置モード
+              selectedCell = cell;
+              pieceName.value = "";
+              placeModal.style.display="flex";
+            }else{
+              // 移動モード
+              if(moveMode){
+                if(cell.classList.contains("highlight")){
+                  // 仮移動
+                  movingPiece.cell.textContent = "";
+                  movingPiece.cell.classList.remove(movingPiece.color);
+                  cell.textContent = movingPiece.name;
+                  cell.classList.add(movingPiece.color);
+                  movingPiece.newCell = cell;
+                  clearHighlights();
+                  moveMode = false;
+                  moveEndBtn.disabled = false;
+                }
+              }else{
+                if(cell.textContent!=="" && cell.classList.contains(currentTeam)){
+                  // コマをクリック → 移動範囲表示
+                  movingPiece = {cell:cell, color:currentTeam, name:cell.textContent};
+                  showMoveRange(cell, moveRange);
+                  moveMode = true;
+                }
+              }
+            }
           });
           board.appendChild(cell);
         }
@@ -152,6 +178,34 @@
         n=Math.floor(n/26)-1;
       }
       return s;
+    }
+
+    // 移動範囲を色付け
+    function showMoveRange(cell, range){
+      clearHighlights();
+      const x = parseInt(cell.dataset.x);
+      const y = parseInt(cell.dataset.y);
+      for(let dx=-range; dx<=range; dx++){
+        for(let dy=-range; dy<=range; dy++){
+          if(Math.abs(dx)+Math.abs(dy) <= range){
+            let nx=x+dx, ny=y+dy;
+            if(nx>=0 && nx<boardSize && ny>=0 && ny<boardSize){
+              const target = getCell(nx,ny);
+              if(!target.classList.contains(currentTeam) && !target.classList.contains("abyss")){
+                target.classList.add("highlight");
+              }
+            }
+          }
+        }
+      }
+    }
+
+    function clearHighlights(){
+      document.querySelectorAll(".highlight").forEach(c=>c.classList.remove("highlight"));
+    }
+
+    function getCell(x,y){
+      return [...board.children].find(c=>c.dataset.x==x && c.dataset.y==y);
     }
 
     // モーダル切替
@@ -168,7 +222,7 @@
     // 適用
     applyPlace.onclick = () => {
       if(!selectedCell) return;
-      selectedCell.className="cell"; // reset
+      selectedCell.className="cell";
       selectedCell.textContent="";
       if(typeSelect.value==="piece"){
         let color = pieceColor.value;
@@ -186,10 +240,48 @@
       }
       placeModal.style.display="none";
     };
-
     closePlace.onclick = ()=> placeModal.style.display="none";
 
+    // ゲーム開始
+    startBtn.onclick = () => {
+      gamePhase = 1;
+      currentTeam = "red";
+      updateTurnInfo();
+    };
+
+    // 移動完了
+    moveEndBtn.onclick = () => {
+      if(movingPiece && movingPiece.newCell){
+        movingPiece.newCell.textContent = movingPiece.name;
+        movingPiece.newCell.classList.add(movingPiece.color);
+        movingPiece.cell = movingPiece.newCell;
+        movingPiece.newCell = null;
+      }
+      movingPiece = null;
+      moveMode = false;
+      clearHighlights();
+      moveEndBtn.disabled = true;
+      endTurn();
+    };
+
+    function endTurn(){
+      gamePhase++;
+      currentTeam = (gamePhase%2===1) ? "red" : "blue";
+      updateTurnInfo();
+    }
+
+    function updateTurnInfo(){
+      if(gamePhase===0){
+        turnInfo.textContent="準備段階";
+        phaseInfo.textContent="";
+      }else{
+        turnInfo.textContent = currentTeam==="red" ? "赤のターン" : "青のターン";
+        phaseInfo.textContent = `(フェーズ${gamePhase})`;
+      }
+    }
+
     createBoard(boardSize);
+    updateTurnInfo();
   </script>
 </body>
 </html>
