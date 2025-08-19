@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
-<title>シミュレーション（統合版）103</title>
+<title>シミュレーション（統合版）104</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   :root{
@@ -521,7 +521,7 @@ function computeReachable(id){
       if(c.terrain==='abyss') continue;
 
       const alliesHere = c.pieces.map(id=>pieceById(id)).filter(pp=>pp && pp.team===p.team);
-      const isAnyRespawn = isRespawnTerrain(c.terrain);
+      // const isAnyRespawn = isRespawnTerrain(c.terrain); //リスポのみ重複可能な設定
 
       // 味方居座りは原則不可。ただしリスポーン（赤/青どちらでも）なら許可（多重OK）
       if(alliesHere.length && !isAnyRespawn) {
@@ -568,7 +568,7 @@ function planMove(id, x, y){
   if(p.plan){ state.arrows = state.arrows.filter(a=>a.id!==p.id); }
 
   p.plan = { x, y, ox:p.x, oy:p.y };
-  p.moved = false; // 試験的にfalseにしてみる
+  p.moved = false; // これをtrueにすると仮移動の選択しなおしができなくなる。
 
   // 同色同マスの競合：リスポーン地形なら多重OK、そうでなければ後勝ち優先で先のプランを取消
   if(!isAnyRespawn){
