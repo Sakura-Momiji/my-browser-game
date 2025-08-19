@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
-<title>シミュレーション（統合版）102</title>
+<title>シミュレーション（統合版）103</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   :root{
@@ -464,7 +464,7 @@ function startGame(){
   if(state.phase!==0) return;
   pushHistory(); // 0→1 へ移る前のスナップショット（Undo用）
   state.phase = 1; state.team='red'; state.turn = 1;
-  for(const p of Object.values(state.pieces)){ p.moved=true; p.plan=null; }
+  for(const p of Object.values(state.pieces)){ p.moved=false; p.plan=null; }
   state.arrows = [];
   renderAll();
 }
@@ -568,7 +568,7 @@ function planMove(id, x, y){
   if(p.plan){ state.arrows = state.arrows.filter(a=>a.id!==p.id); }
 
   p.plan = { x, y, ox:p.x, oy:p.y };
-  p.moved = true;
+  p.moved = false; // 試験的にfalseにしてみる
 
   // 同色同マスの競合：リスポーン地形なら多重OK、そうでなければ後勝ち優先で先のプランを取消
   if(!isAnyRespawn){
