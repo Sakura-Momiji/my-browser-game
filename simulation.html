@@ -1,235 +1,195 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <title>シミュレーションゲーム準備段階</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      background: #fafafa;
-      margin: 20px;
-      text-align: center;
-    }
+<meta charset="utf-8">
+<title>シミュレーション準備段階</title>
+<style>
+  body { font-family: sans-serif; text-align: center; background: #fafafa; }
+  #board {
+    display: grid;
+    margin: 20px auto;
+    border: 2px solid #333;
+  }
+  .cell {
+    width: 50px; height: 50px;
+    border: 1px solid #ccc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 12px;
+    position: relative;
+  }
+  .label-x { position: absolute; top: -15px; left: 2px; font-size: 10px; color: #555; }
+  .label-y { position: absolute; left: -15px; top: 2px; font-size: 10px; color: #555; }
+  .red { background: #f88; }
+  .blue { background: #88f; color: white; }
+  .abyss { background: black; }
+  .respawn-red { background: pink; }
+  .respawn-blue { background: lightblue; }
 
-    /* 設定ボタン・ゲーム開始ボタン */
-    #settingsBtn, #startBtn {
-      margin: 10px;
-      padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 8px;
-      background: #4CAF50;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    #settingsBtn:hover, #startBtn:hover { background: #45a049; }
-
-    /* 盤面 */
-   #board {
-  display: grid;
-  margin: 20px auto;
-  border: 2px solid #333;
-  grid-template-columns: repeat(5, 50px); /* 5列固定例 */
-  grid-auto-rows: 50px;                  /* 行も50px */
-}
-    .cell {
-      width: 50px;
-      height: 50px;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 20px;
-      background: white;
-      border: 1px solid #ccc;
-    }
-    .red { background: #f88; }
-    .blue { background: #88f; color: white; }
-
-    /* モーダル共通 */
-    .modal {
-      display: none;
-      position: fixed;
-      top:0; left:0;
-      width:100%; height:100%;
-      background: rgba(0,0,0,0.5);
-      justify-content: center;
-      align-items: center;
-    }
-    .modal-content {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      text-align: left;
-      position: relative;
-      width: 300px;
-    }
-    .modal-content h2 { margin-top: 0; }
-    .closeBtn {
-      position: absolute;
-      top:10px; right:10px;
-      cursor: pointer;
-      font-weight: bold;
-      color: red;
-    }
-    .modal-content button { margin-top: 10px; margin-right: 5px; }
-  </style>
+  .modal {
+    display: none; position: fixed; top:0; left:0;
+    width:100%; height:100%; background: rgba(0,0,0,0.5);
+    justify-content: center; align-items: center;
+  }
+  .modal-content {
+    background: white; padding: 20px; border-radius: 10px; width: 300px;
+    text-align: left; position: relative;
+  }
+  .closeBtn { position: absolute; top:5px; right:10px; cursor: pointer; color: red; }
+</style>
 </head>
 <body>
+  <h1>シミュレーション準備段階（ステップ1）</h1>
   <button id="settingsBtn">設定</button>
-  <button id="startBtn">ゲーム開始</button>
-  <h1>シミュレーションゲーム準備段階</h1>
   <div id="board"></div>
 
-  <!-- 盤面設定モーダル -->
-  <div id="settingModal" class="modal">
+  <!-- 配置モーダル -->
+  <div id="placeModal" class="modal">
     <div class="modal-content">
-      <span class="closeBtn" id="closeSetting">×</span>
-      <h2>盤面の設定</h2>
-      <label>盤面サイズ:</label><br>
-      <input type="number" id="boardSizeInput" value="5" min="1"><br>
-      <button id="applySetting">完了</button>
-      <button id="cancelSetting">キャンセル</button>
-    </div>
-  </div>
-
-  <!-- コマ操作モーダル -->
-  <div id="pieceModal" class="modal">
-    <div class="modal-content">
-      <span class="closeBtn" id="closePiece">×</span>
-      <h2>コマ操作</h2>
-      <p>コマの色と操作を選択</p>
-      <button id="redBtn">赤</button>
-      <button id="blueBtn">青</button>
-      <button id="deleteBtn">削除</button><br>
-      <label>数字を変更:</label>
-      <input type="number" id="editNumber" min="1">
-      <button id="applyNumberBtn">適用</button>
+      <span class="closeBtn" id="closePlace">×</span>
+      <h2 id="modalTitle">配置</h2>
+      <label>
+        種類:
+        <select id="typeSelect">
+          <option value="piece">コマ</option>
+          <option value="gimmick">ギミック</option>
+        </select>
+      </label>
+      <div id="pieceOptions">
+        <label>色:
+          <select id="pieceColor">
+            <option value="red">赤</option>
+            <option value="blue">青</option>
+          </select>
+        </label><br>
+        <label>種類:
+          <select id="pieceType">
+            <option>ポーン</option>
+            <option>ナイト</option>
+            <option>ルーク</option>
+            <option>クイーン</option>
+            <option>キング</option>
+          </select>
+        </label><br>
+        <label>名前:<input type="text" id="pieceName"></label>
+      </div>
+      <div id="gimmickOptions" style="display:none;">
+        <label>種類:
+          <select id="gimmickType">
+            <option value="abyss">奈落</option>
+            <option value="respawn">リスポーンエリア</option>
+          </select>
+        </label><br>
+        <label id="respawnColorLabel">色:
+          <select id="respawnColor">
+            <option value="red">赤</option>
+            <option value="blue">青</option>
+          </select>
+        </label>
+      </div>
+      <br>
+      <button id="applyPlace">適用</button>
     </div>
   </div>
 
   <script>
     const board = document.getElementById("board");
-    const settingsBtn = document.getElementById("settingsBtn");
-    const startBtn = document.getElementById("startBtn");
-    const settingModal = document.getElementById("settingModal");
-    const pieceModal = document.getElementById("pieceModal");
-    const boardSizeInput = document.getElementById("boardSizeInput");
-    const closeSetting = document.getElementById("closeSetting");
-    const applySetting = document.getElementById("applySetting");
-    const cancelSetting = document.getElementById("cancelSetting");
-    const closePiece = document.getElementById("closePiece");
-    const redBtn = document.getElementById("redBtn");
-    const blueBtn = document.getElementById("blueBtn");
-    const deleteBtn = document.getElementById("deleteBtn");
-    const editNumber = document.getElementById("editNumber");
-    const applyNumberBtn = document.getElementById("applyNumberBtn");
+    const placeModal = document.getElementById("placeModal");
+    const closePlace = document.getElementById("closePlace");
+    const typeSelect = document.getElementById("typeSelect");
+    const pieceOptions = document.getElementById("pieceOptions");
+    const gimmickOptions = document.getElementById("gimmickOptions");
+    const pieceColor = document.getElementById("pieceColor");
+    const pieceType = document.getElementById("pieceType");
+    const pieceName = document.getElementById("pieceName");
+    const gimmickType = document.getElementById("gimmickType");
+    const respawnColor = document.getElementById("respawnColor");
+    const applyPlace = document.getElementById("applyPlace");
 
-    let boardSize = parseInt(boardSizeInput.value);
-    let redCount = 0;
-    let blueCount = 0;
-    let placedPieces = [];
+    let boardSize = 5;
     let selectedCell = null;
-    let gameStarted = false;
 
-    function createBoard(size) {
+    function createBoard(size){
       board.innerHTML = "";
       board.style.gridTemplateColumns = `repeat(${size}, 50px)`;
+      for(let y=0;y<size;y++){
+        for(let x=0;x<size;x++){
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.dataset.x = x;
+          cell.dataset.y = y;
 
-      for(let i=0;i<size*size;i++){
-        const cell = document.createElement("div");
-        cell.className = "cell";
-        cell.dataset.index = i;
-        board.appendChild(cell);
+          // 座標ラベル
+          if(y===0){
+            const lx = document.createElement("span");
+            lx.className="label-x";
+            lx.textContent = numToCol(x);
+            cell.appendChild(lx);
+          }
+          if(x===0){
+            const ly = document.createElement("span");
+            ly.className="label-y";
+            ly.textContent = y+1;
+            cell.appendChild(ly);
+          }
 
-        cell.addEventListener("click", () => {
-          if(gameStarted) return; // ゲーム開始後は操作不可
-          selectedCell = cell;
-          pieceModal.style.display = "flex";
-          editNumber.value = cell.dataset.number || "";
-        });
+          cell.addEventListener("click", () => {
+            selectedCell = cell;
+            pieceName.value = "";
+            placeModal.style.display="flex";
+          });
+          board.appendChild(cell);
+        }
       }
     }
+
+    function numToCol(n){
+      let s="";
+      while(n>=0){
+        s=String.fromCharCode(n%26+65)+s;
+        n=Math.floor(n/26)-1;
+      }
+      return s;
+    }
+
+    // モーダル切替
+    typeSelect.onchange = () => {
+      if(typeSelect.value==="piece"){
+        pieceOptions.style.display="block";
+        gimmickOptions.style.display="none";
+      }else{
+        pieceOptions.style.display="none";
+        gimmickOptions.style.display="block";
+      }
+    };
+
+    // 適用
+    applyPlace.onclick = () => {
+      if(!selectedCell) return;
+      selectedCell.className="cell"; // reset
+      selectedCell.textContent="";
+      if(typeSelect.value==="piece"){
+        let color = pieceColor.value;
+        let name = pieceName.value || pieceType.value;
+        selectedCell.classList.add(color);
+        selectedCell.textContent=name;
+      }else{
+        if(gimmickType.value==="abyss"){
+          selectedCell.classList.add("abyss");
+        }else{
+          let color = respawnColor.value;
+          selectedCell.classList.add("respawn-"+color);
+          selectedCell.textContent="R";
+        }
+      }
+      placeModal.style.display="none";
+    };
+
+    closePlace.onclick = ()=> placeModal.style.display="none";
 
     createBoard(boardSize);
-
-    // モーダル開閉
-    settingsBtn.onclick = () => settingModal.style.display = "flex";
-    closeSetting.onclick = cancelSetting.onclick = () => settingModal.style.display = "none";
-    closePiece.onclick = () => pieceModal.style.display = "none";
-
-    // 盤面設定完了
-    applySetting.onclick = () => {
-      const newSize = parseInt(boardSizeInput.value);
-      if(newSize > 0){
-        boardSize = newSize;
-        redCount = 0;
-        blueCount = 0;
-        placedPieces = [];
-        createBoard(boardSize);
-        settingModal.style.display = "none";
-      } else alert("1以上の数値を入力してください");
-    };
-
-    // ゲーム開始
-    startBtn.onclick = () => {
-      gameStarted = true;
-      alert("ゲーム開始！準備段階の編集は不可になります。");
-    };
-
-    // コマ操作
-    function placePiece(color){
-      if(!selectedCell) return;
-      // 数字計算
-      let number;
-      if(color === "red") number = ++redCount;
-      else number = ++blueCount;
-
-      selectedCell.dataset.piece = color;
-      selectedCell.dataset.number = number;
-      selectedCell.dataset.type = "normal";
-      selectedCell.classList.remove("red","blue");
-      selectedCell.classList.add(color);
-      selectedCell.textContent = number;
-
-      // 配置履歴更新
-      const index = placedPieces.findIndex(p => p.cellIndex == selectedCell.dataset.index);
-      if(index >=0) placedPieces[index] = {cellIndex:selectedCell.dataset.index, team:color, number:number, type:"normal"};
-      else placedPieces.push({cellIndex:selectedCell.dataset.index, team:color, number:number, type:"normal"});
-
-      pieceModal.style.display = "none";
-    }
-
-    function deletePiece(){
-      if(!selectedCell) return;
-      const prevTeam = selectedCell.dataset.piece;
-      if(prevTeam==="red") redCount--;
-      if(prevTeam==="blue") blueCount--;
-      selectedCell.dataset.piece = "";
-      selectedCell.dataset.number = "";
-      selectedCell.dataset.type = "";
-      selectedCell.classList.remove("red","blue");
-      selectedCell.textContent = "";
-      // 配置履歴から削除
-      placedPieces = placedPieces.filter(p => p.cellIndex != selectedCell.dataset.index);
-      pieceModal.style.display = "none";
-    }
-
-    function editNumberFunc(){
-      if(!selectedCell) return;
-      const newNum = parseInt(editNumber.value);
-      if(!isNaN(newNum) && newNum>0){
-        selectedCell.dataset.number = newNum;
-        selectedCell.textContent = newNum;
-        const piece = placedPieces.find(p => p.cellIndex==selectedCell.dataset.index);
-        if(piece) piece.number = newNum;
-      }
-    }
-
-    redBtn.onclick = ()=>placePiece("red");
-    blueBtn.onclick = ()=>placePiece("blue");
-    deleteBtn.onclick = deletePiece;
-    applyNumberBtn.onclick = editNumberFunc;
   </script>
 </body>
 </html>
