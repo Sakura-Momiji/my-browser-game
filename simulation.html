@@ -628,40 +628,11 @@ function processEnemyRespawnCaptures(){
   if(dmgBlue) state.life.blue = Math.max(0, state.life.blue - dmgBlue);
 
   warpQueue.forEach(p=>{
-  removePieceFromCell(p.id);
-
-  // 自軍のリスポーン候補を全部探す
-  const respawnCells = [];
-  for(let y=0;y<state.size;y++) for(let x=0;x<state.size;x++){
-    const cell = cellAt(x,y);
-    if(cell.terrain === `respawn-${p.team}`){
-      respawnCells.push({x,y});
-    }
-  }
-
-  // まず空いているセルを探す
-  let target = null;
-  for(const sp of respawnCells){
-    const cell = cellAt(sp.x, sp.y);
-    const alliesHere = cell.pieces.map(id => pieceById(id)).filter(pp => pp && pp.team === p.team);
-    if(alliesHere.length === 0){ // 空きセル
-      target = sp;
-      break;
-    }
-  }
-
-  // 空きがなければ候補の先頭を使う（重複許可）
-  if(!target && respawnCells.length){
-    target = respawnCells[0];
-  }
-
-  if(target){
-    movePieceTo(p.id, target.x, target.y);
-  } else {
-    // まったくリスポーン地点がない（盤面に配置されていない）場合のみ消滅
-    p.alive = false;
-  }
-});
+    removePieceFromCell(p.id);
+    const sp = findRespawnCell(p.team);
+    if(sp) movePieceTo(p.id, sp.x, sp.y); else p.alive=false;
+  });
+}
 
 function collectConflicts(){
   const list = [];
