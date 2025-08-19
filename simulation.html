@@ -585,6 +585,50 @@ function planMove(id, x, y){
   renderBoardHighlights();
 }
 
+  // 仮移動のキャンセル
+  function handleCellClick(cell){
+  if(gamePhase===0){
+    // 準備段階（配置）
+    if(cell.textContent===""){
+      cell.classList.add(currentTeam);
+      cell.textContent = currentTeam==="red" ? "R" : "B";
+      currentTeam = currentTeam==="red" ? "blue" : "red";
+    }
+  }else{
+    // ゲーム中
+    if(moveMode){
+      // === 追加部分 ===
+      // もし「元の駒セル」を再クリックしたら仮移動をキャンセル
+      if(cell === movingPiece.cell){
+        if(previewCell){
+          previewCell.textContent = "";
+          previewCell.classList.remove(movingPiece.color);
+          previewCell = null;
+        }
+        moveMode = false;
+        movingPiece = null;
+        moveEndBtn.disabled = true;
+        clearHighlights();
+        return; // ← ここで処理終了
+      }
+      // =================
+      
+      if(cell.classList.contains("highlight")){
+        attemptMove(cell);
+      }
+    }else{
+      if(cell.textContent!=="" && cell.classList.contains(currentTeam)){
+        movingPiece = {cell:cell, color:currentTeam, name:cell.textContent, type:"ノーマル"};
+        document.getElementById("pieceInfo").textContent = 
+          `選択中: ${movingPiece.name} (${movingPiece.type})`;
+        showMoveRange(cell, moveRange);
+        moveMode = true;
+      }
+    }
+  }
+}
+
+
 function commitMoves(){
   // 本確定の前に履歴を積む（Undoでこのフェーズに戻れる）
   pushHistory();
