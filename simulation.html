@@ -346,6 +346,7 @@
                     <option value="none">（選択なし）</option>
                     <option value="sampleA">サンプルA</option>
                     <option value="sampleB">サンプルB</option>
+                    <option value="debug1">デバッグ1</option>
                 </select>
                 <button id="btnApplyTemplate" class="secondary">テンプレ適用</button>
             </div>
@@ -1138,16 +1139,31 @@
                     { x: 5, y: 7, team: 'blue', type: 'ビショップ', name: 'B2' }
                 ]
             },
-            sampleB: {
-                size: 10,
+            debug1: {
+                size: 5,
                 cells: [
-                    { x: 0, y: 9, terrain: 'respawn-red' },
-                    { x: 9, y: 0, terrain: 'respawn-blue' },
-                    { x: 4, y: 4, terrain: 'abyss' }, { x: 5, y: 4, terrain: 'abyss' }, { x: 4, y: 5, terrain: 'abyss' }
+                    { x: 0, y: 4, terrain: 'respawn-red' },
+                    { x: 1, y: 4, terrain: 'respawn-red' },
+                    { x: 2, y: 4, terrain: 'respawn-red' },
+                    { x: 3, y: 4, terrain: 'respawn-red' },
+                    { x: 4, y: 4, terrain: 'respawn-red' },
+                    { x: 0, y: 0, terrain: 'respawn-blue' },
+                    { x: 1, y: 0, terrain: 'respawn-blue' },
+                    { x: 2, y: 0, terrain: 'respawn-blue' },
+                    { x: 3, y: 0, terrain: 'respawn-blue' },
+                    { x: 4, y: 0, terrain: 'respawn-blue' }
                 ],
                 pieces: [
-                    { x: 1, y: 9, team: 'red', type: 'ルーク', name: 'R-ROOK' },
-                    { x: 8, y: 0, team: 'blue', type: 'ルーク', name: 'B-ROOK' }
+                    { x: 0, y: 3, team: 'red', type: 'ポーン', name: 'RP1' },
+                    { x: 1, y: 3, team: 'red', type: 'ポーン', name: 'RP2' },
+                    { x: 2, y: 3, team: 'red', type: 'ポーン', name: 'RP3' },
+                    { x: 3, y: 3, team: 'red', type: 'ポーン', name: 'RP4' },
+                    { x: 4, y: 3, team: 'red', type: 'ポーン', name: 'RP5' },
+                    { x: 0, y: 1, team: 'blue', type: 'ポーン', name: 'BP1' },
+                    { x: 1, y: 1, team: 'blue', type: 'ポーン', name: 'BP1' },
+                    { x: 2, y: 1, team: 'blue', type: 'ポーン', name: 'BP1' },
+                    { x: 3, y: 1, team: 'blue', type: 'ポーン', name: 'BP1' },
+                    { x: 4, y: 1, team: 'blue', type: 'ポーン', name: 'BP1' }
                 ]
             }
         };
