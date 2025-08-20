@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
-<title>シミュレーション（統合版）108</title>
+<title>シミュレーション（統合版）109</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   :root{
@@ -631,10 +631,10 @@ function processEnemyRespawnCaptures(){
   // そのチームのすべてのリスポーン地点を取得
   const respawns = findAllRespawnCells(p.team);
   // まだ誰もいない場所を探す
-  const empty = respawns.find(c => c.pieces.length === 0);
-  if(empty){
+  const emptyTeamRespawns = respawns.find(c => c.pieces.length === 0);
+  if(emptyTeamRespawns){
     // 空きがあればそこへ移動
-    movePieceTo(p.id, empty.x, empty.y);
+    movePieceTo(p.id, emptyTeamRespawns.x, emptyTeamRespawns.y);
   }else{
     // 空きがない場合の処理（例：強制死亡）
     p.alive = false;
