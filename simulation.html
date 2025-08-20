@@ -618,6 +618,7 @@
             cellAt(x, y).pieces.push(id);
         }
 
+        // リスポーン地点 を探す(初期設定)
         function findRespawnCell(team) {
             for (let y = 0; y < state.size; y++) for (let x = 0; x < state.size; x++) {
                 const t = cellAt(x, y).terrain;
@@ -625,6 +626,22 @@
             }
             return null;
         }
+
+        // リスポーン地点 かつ 駒がいない場所を探す
+        function findEmptyRespawnCell(team) {
+    const target = (team === 'red') ? 'respawn-red' : 'respawn-blue';
+
+    for (let y = 0; y < state.size; y++) {
+        for (let x = 0; x < state.size; x++) {
+            const cell = cellAt(x, y);
+            if (cell.terrain === target && cell.pieces.length === 0) {
+                // そのチームのリスポーン地点 かつ 駒がいない場所
+                return { x, y };
+            }
+        }
+    }
+    return null; // 空きがなければ null
+}
 
         /* =========================
            準備段階：配置/編集モーダル
@@ -890,10 +907,10 @@
             if (dmgRed) state.life.red = Math.max(0, state.life.red - dmgRed);
             if (dmgBlue) state.life.blue = Math.max(0, state.life.blue - dmgBlue);
 
-            // 敵陣のリスポーンを踏んだ時のワープ処理
+            // リスポーンする時の処理
             warpQueue.forEach(p => {
                 removePieceFromCell(p.id);
-                const sp = findRespawnCell(p.team);
+                const sp = findEmptyRespawnCell(p.team);
                 if (sp) movePieceTo(p.id, sp.x, sp.y);
                 else p.alive = false;
             });
@@ -995,12 +1012,12 @@
                     const loser = (b.result === 'red') ? b.blue : b.red;
                     state.vp[winner.team] += 1;
                     if (loser.type === 'キング') state.life[loser.team] = Math.max(0, state.life[loser.team] - 1);
-                    const sp = findRespawnCell(loser.team);
+                    const sp = findEmptyRespawnCell(loser.team);
                     removePieceFromCell(loser.id);
                     if (sp) movePieceTo(loser.id, sp.x, sp.y); else loser.alive = false;
                 } else {
                     for (const side of [b.red, b.blue]) {
-                        const sp = findRespawnCell(side.team);
+                        const sp = findEmptyRespawnCell(side.team);
                         removePieceFromCell(side.id);
                         if (sp) movePieceTo(side.id, sp.x, sp.y); else side.alive = false;
                     }
