@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
-<title>シミュレーション（統合版）109</title>
+<title>シミュレーション（統合版）110</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   :root{
@@ -629,7 +629,7 @@ function processEnemyRespawnCaptures(){
  warpQueue.forEach(p=>{
   removePieceFromCell(p.id);
   // そのチームのすべてのリスポーン地点を取得
-  const respawns = findAllRespawnCells(p.team);
+  const sp = findAllRespawnCells(p.team);
   // まだ誰もいない場所を探す
   const emptyTeamRespawns = respawns.find(c => c.pieces.length === 0);
   if(emptyTeamRespawns){
