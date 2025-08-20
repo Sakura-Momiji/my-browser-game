@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>シミュレーション（統合版）112</title>
+    <title>シミュレーション（統合版）113</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
         :root {
@@ -891,36 +891,11 @@
             if (dmgBlue) state.life.blue = Math.max(0, state.life.blue - dmgBlue);
 
             // 敵陣のリスポーンを踏んだ時のワープ処理
-
-            function findAllRespawnCells(team) {
-                const target = (team === 'red') ? 'respawn-red' : 'respawn-blue';
-                const result = [];
-                for (let y = 0; y < state.size; y++)
-                    for (let x = 0; x < state.size; x++) {
-                        const cell = cellAt(x, y);
-                        if (cell.terrain === target) result.push(cell);
-                    }
-                return result;
-            }
-
             warpQueue.forEach(p => {
                 removePieceFromCell(p.id);
-
-                // そのチームのすべてのリスポーン地点を取得
-                const respawns = findAllRespawnCells(p.team);
-
-                // まだ誰もいない場所を探す
-                const empty = respawns.find(c => c.pieces.length === 0);
-
-                if (empty) {
-                    // 空きがあればそこへ移動
-                    movePieceTo(p.id, empty.x, empty.y);
-                } else {
-                    // 空きがない場合の処理（例：強制死亡）
-                    p.alive = false;
-                    // もし「重複でも置く」で良いなら：
-                    // const sp = respawns[0]; movePieceTo(p.id, sp.x, sp.y);
-                }
+                const sp = findRespawnCell(p.team);
+                if (sp) movePieceTo(p.id, sp.x, sp.y);
+                else p.alive = false;
             });
         }
 
