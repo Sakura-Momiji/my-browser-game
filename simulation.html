@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
-<title>シミュレーション（統合版）107</title>
+<title>シミュレーション（統合版）108</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   :root{
@@ -584,8 +584,6 @@ function planMove(id, x, y){
   renderBoardHighlights();
 }
 
-  // 仮移動のキャンセル
-
 
 function commitMoves(){
   // 本確定の前に履歴を積む（Undoでこのフェーズに戻れる）
@@ -627,11 +625,23 @@ function processEnemyRespawnCaptures(){
   if(dmgRed) state.life.red = Math.max(0, state.life.red - dmgRed);
   if(dmgBlue) state.life.blue = Math.max(0, state.life.blue - dmgBlue);
 
-  warpQueue.forEach(p=>{
-    removePieceFromCell(p.id);
-    const sp = findRespawnCell(p.team);
-    if(sp) movePieceTo(p.id, sp.x, sp.y); else p.alive=false;
-  });
+    // 敵陣のリスポーンを踏んだ時のワープ処理
+ warpQueue.forEach(p=>{
+  removePieceFromCell(p.id);
+  // そのチームのすべてのリスポーン地点を取得
+  const respawns = findAllRespawnCells(p.team);
+  // まだ誰もいない場所を探す
+  const empty = respawns.find(c => c.pieces.length === 0);
+  if(empty){
+    // 空きがあればそこへ移動
+    movePieceTo(p.id, empty.x, empty.y);
+  }else{
+    // 空きがない場合の処理（例：強制死亡）
+    p.alive = false;
+    // もし「重複でも置く」で良いなら：
+    // const sp = respawns[0]; movePieceTo(p.id, sp.x, sp.y);
+  }
+});
 }
 
 function collectConflicts(){
