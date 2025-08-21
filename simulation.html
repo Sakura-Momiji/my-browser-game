@@ -20,6 +20,7 @@
             --conflict: #b682ff;
             --red-info: rgb(255, 50, 50);
             --blue-info: rgb(50, 50, 255);
+            --active-menu: #c2fbff;
         }
 
         body {
@@ -276,13 +277,30 @@
             margin: .2rem 0 .6rem
         }
 
+        /* 設定画面の右上の×印 */
         .closeX {
             position: absolute;
-            right: 10px;
             top: 8px;
-            font-weight: 800;
-            color: #e91e63;
-            cursor: pointer
+            right: 12px;
+            background: transparent;
+            /* 背景を透明に */
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            line-height: 1;
+            padding: 4px 8px;
+            /* クリックしやすく余白だけ残す */
+            border-radius: 4px;
+            /* hover背景を綺麗に見せる */
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .closeX:hover {
+            background-color: #eee;
+            /* ← 薄いグレー背景 */
+            color: #000;
+            /* アイコンは濃い色に */
         }
 
         .row {
@@ -317,6 +335,12 @@
             display: flex;
             width: 80%;
             max-width: 800px;
+            min-height: 40vh;
+            /* 画面高さの40%確保 */
+            min-height: 400px;
+            /* ただし最低400px確保 */
+            max-height: 90vh;
+            /* はみ出すときはスクロール */
             background: #fff;
             border-radius: 8px;
             overflow: hidden;
@@ -426,7 +450,7 @@
 
         /* ルール説明の今選択している目次 */
         #ruleModal .toc li.active {
-            background: #c2fbff;
+            background: var(--active-menu);
             font-weight: bold;
             border-left: 4px solid var(--blue);
             padding-left: 6px;
@@ -454,6 +478,96 @@
             padding: 0.5rem 1rem;
         }
 
+        /* 以下設定画面モーダル */
+        .settings-modal-content {
+            position: relative;
+            /* ←これ追加 */
+            display: flex;
+            width: 80vw;
+            /* 画面幅の80% */
+            max-width: 600px;
+            /* PCではこれ以上広がらない */
+            min-width: 280px;
+            /* スマホでも潰れすぎない */
+            min-height: 40vh;
+            /* 画面高さの40%確保 */
+            min-height: 400px;
+            /* ただし最低400px確保 */
+            max-height: 90vh;
+            /* はみ出すときはスクロール */
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .settings-sidebar {
+            width: 10vw;
+            /* 画面幅の10% */
+            max-width: 150px;
+            /* PCではこれ以上広がらない */
+            min-width: 90px;
+            /* スマホでも潰れすぎない */
+            min-height: 40vh;
+            /* 画面高さの40%確保 */
+            min-height: 400px;
+            /* ただし最低400px確保 */
+            max-height: 90vh;
+            /* はみ出すときはスクロール */
+            background: #f0f0f0;
+            border-right: 1px solid #ccc;
+        }
+
+        .settings-sidebar ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .settings-sidebar li {
+            padding: 12px;
+            cursor: pointer;
+        }
+
+        .settings-sidebar li.active {
+            background: var(--active-menu);
+            font-weight: bold;
+        }
+
+        .settings-body {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .settings-section {
+            display: none;
+        }
+
+        .settings-section.active {
+            display: block;
+        }
+
+        .settings-footer {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            display: flex;
+            gap: 8px;
+        }
+
+        #btnApplySettings {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            /* お好みで色変更 */
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #btnApplySettings:hover {
+            background-color: #45a049;
+        }
 
         /* バトル一覧 */
         #battleList .battleRow {
@@ -549,53 +663,80 @@
 
     <!-- 設定モーダル -->
     <div id="settingsModal" class="modal">
-        <div class="panel">
-            <div class="closeX" data-close="settingsModal">×</div>
-            <h2>設定</h2>
-            <div class="hr"></div>
-            <h3>基本設定</h3>
-            <div class="row"><label>テンプレート</label>
-                <select id="inpTemplate">
-                    <option value="none">（選択なし）</option>
-                    <option value="sampleA">サンプルA</option>
-                    <option value="vs6">6VS6</option>
-                    <option value="vs4">4VS4</option>
-                    <option value="debug1">デバッグ1</option>
-                </select>
-                <button id="btnApplyTemplate" class="secondary">テンプレ適用</button>
+        <div class="modal-content settings-modal-content">
+            <!-- 右上の×印 -->
+            <button class="closeX" id="closeSettings">×</button>
+
+            <!-- 左メニューは自動生成 -->
+            <div class="settings-sidebar">
+                <ul id="settingsMenu" class="toc"></ul>
             </div>
 
-            <div class="row"><label>盤面の大きさ</label><input type="number" id="inpSize" min="3" max="30" value="8">
-            </div>
-            <div class="row"><label>ターン数</label><input type="number" id="inpTurnLimit" min="1" max="200" value="10">
-            </div>
-            <div class="row"><label>赤ライフ</label><input type="number" id="inpLifeRed" min="1" max="99" value="10"></div>
-            <div class="row"><label>青ライフ</label><input type="number" id="inpLifeBlue" min="1" max="99" value="10"></div>
-            <div class="hr"></div>
-            <h3>移動距離（コスト上限）</h3>
-            <div class="row"><label>ポーン</label><input type="number" id="mvPawn" min="1" max="12" value="3"></div>
-            <div class="row"><label>ナイト</label><input type="number" id="mvKnight" min="1" max="12" value="4"></div>
-            <div class="row"><label>ビショップ</label><input type="number" id="mvBishop" min="1" max="12" value="5"></div>
-            <div class="row"><label>ルーク</label><input type="number" id="mvRook" min="1" max="12" value="6"></div>
-            <div class="row"><label>クイーン</label><input type="number" id="mvQueen" min="1" max="12" value="6"></div>
-            <div class="row"><label>キング</label><input type="number" id="mvKing" min="1" max="12" value="3"></div>
-            <div class="hr"></div>
-            <h3>特殊ルール</h3>
-            <div class="row"><label>キングアタック</label><input type="number" id="kingAttackDamage" min="1" max="99"
-                    value="1"></div>
-            <div class="hr"></div>
-            <div class="row"><label>デバッグモード</label>
-                <select id="inpDebug">
-                    <option value="off">OFF</option>
-                    <option value="on">ON</option>
-                </select>
-            </div>
-            <div class="note">設定を適用すると盤面はリセットされ、フェーズ0（準備）に戻ります。</div>
-            <div class="row" style="justify-content:flex-end">
-                <button id="btnApplySettings">適用</button>
+            <!-- 右側セクション群 -->
+            <div class="settings-body">
+                <div id="basicSettings" class="settings-section" data-title="基本設定">
+                    <h3>基本設定</h3>
+                    <div class="row"><label>テンプレート</label>
+                        <select id="inpTemplate">
+                            <option value="none">（選択なし）</option>
+                            <option value="sampleA">サンプルA</option>
+                            <option value="vs6">6VS6</option>
+                            <option value="vs4">4VS4</option>
+                            <option value="debug1">デバッグ1</option>
+                        </select>
+                        <button id="btnApplyTemplate" class="secondary">テンプレ適用</button>
+                    </div>
+                    <div class="row"><label>盤面の大きさ</label><input type="number" id="inpSize" min="3" max="30" value="8">
+                    </div>
+                    <div class="row"><label>ターン数</label><input type="number" id="inpTurnLimit" min="1" max="200"
+                            value="10"></div>
+                    <div class="row"><label>赤ライフ</label><input type="number" id="inpLifeRed" min="1" max="99"
+                            value="10"></div>
+                    <div class="row"><label>青ライフ</label><input type="number" id="inpLifeBlue" min="1" max="99"
+                            value="10"></div>
+                </div>
+
+                <div id="moveSettings" class="settings-section" data-title="移動距離">
+                    <h3>移動距離（コスト上限）</h3>
+                    <div class="row"><label>ポーン</label><input type="number" id="mvPawn" min="1" max="12" value="3">
+                    </div>
+                    <div class="row"><label>ナイト</label><input type="number" id="mvKnight" min="1" max="12" value="4">
+                    </div>
+                    <div class="row"><label>ビショップ</label><input type="number" id="mvBishop" min="1" max="12" value="5">
+                    </div>
+                    <div class="row"><label>ルーク</label><input type="number" id="mvRook" min="1" max="12" value="6">
+                    </div>
+                    <div class="row"><label>クイーン</label><input type="number" id="mvQueen" min="1" max="12" value="6">
+                    </div>
+                    <div class="row"><label>キング</label><input type="number" id="mvKing" min="1" max="12" value="3">
+                    </div>
+                </div>
+
+                <div id="specialRules" class="settings-section" data-title="特殊ルール">
+                    <h3>特殊ルール</h3>
+                    <div class="row"><label>キングアタック</label><input type="number" id="kingAttackDamage" min="1" max="99"
+                            value="1"></div>
+                </div>
+
+                <div id="debugSettings" class="settings-section" data-title="デバッグ">
+                    <h3>デバッグモード</h3>
+                    <div class="row"><label>デバッグモード</label>
+                        <select id="inpDebug">
+                            <option value="off">OFF</option>
+                            <option value="on">ON</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="settings-footer">
+                    <div class="note">設定を適用すると盤面はリセットされ、フェーズ0（準備）に戻ります。</div>
+                    <button id="btnApplySettings">適用</button>
+                </div>
             </div>
         </div>
     </div>
+
+
 
     <!-- 配置/編集モーダル（フェーズ0のみ） -->
     <div id="placeModal" class="modal">
@@ -1344,6 +1485,42 @@
         /* =========================
            UI: 設定 / 開始 / 移動完了 / Undo / テンプレ/ルール説明
         ========================= */
+        //設定画面
+        // 左メニュー自動生成
+        const menu = document.getElementById("settingsMenu");
+        const sections = document.querySelectorAll(".settings-section");
+
+        // セクションごとにメニューを追加
+        sections.forEach((section, index) => {
+            const li = document.createElement("li");
+            li.textContent = section.dataset.title || section.id; // data-titleを優先
+            li.dataset.target = section.id;
+            if (index === 0) {
+                li.classList.add("active");
+                section.classList.add("active");
+            }
+            menu.appendChild(li);
+        });
+
+        // クリックで切り替え
+        menu.addEventListener("click", (e) => {
+            if (e.target.tagName === "LI") {
+                // 左メニュー切替
+                menu.querySelectorAll("li").forEach(li => li.classList.remove("active"));
+                e.target.classList.add("active");
+
+                // 右セクション切替
+                sections.forEach(sec => sec.classList.remove("active"));
+                document.getElementById(e.target.dataset.target).classList.add("active");
+            }
+        });
+
+        // 設定画面の右上の×印でモーダルを閉じる処理
+        // ×ボタンで閉じる
+        document.getElementById("closeSettings").addEventListener("click", () => {
+            document.getElementById("settingsModal").classList.remove('show');
+        });
+
         document.getElementById('btnSettings').addEventListener('click', () => {
             document.getElementById('inpSize').value = state.size;
             document.getElementById('inpTurnLimit').value = state.turnLimit;
