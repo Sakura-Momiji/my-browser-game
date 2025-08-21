@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
-
+<!-- 制作：さくらもみじ　無断配布禁止。 あと汚いコードを見るんじゃない。-->
 <head>
     <meta charset="utf-8" />
     <title>シミュレーション（統合版）114</title>
@@ -259,6 +259,21 @@
             z-index: 10
         }
 
+        /* 中身のパネル */
+        .panel {
+            background: #fff;
+            padding: 16px;
+            border-radius: 8px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        /* 通知 */
+        .notice {
+            color: green;
+            margin-top: 8px;
+        }
+
         .modal.show {
             display: flex
         }
@@ -483,6 +498,7 @@
             position: relative;
             /* ←これ追加 */
             display: flex;
+            flex-direction: row;
             width: 80vw;
             /* 画面幅の80% */
             max-width: 600px;
@@ -515,6 +531,7 @@
             /* はみ出すときはスクロール */
             background: #f0f0f0;
             border-right: 1px solid #ccc;
+            overflow-y: auto;
         }
 
         .settings-sidebar ul {
@@ -535,7 +552,11 @@
 
         .settings-body {
             flex: 1;
-            padding: 20px;
+            overflow-y: auto;
+            /* ここでスクロール */
+            padding: 16px;
+            padding-bottom: 60px;
+            /* フッター分の余白確保 */
         }
 
         .settings-section {
@@ -548,10 +569,15 @@
 
         .settings-footer {
             position: absolute;
-            bottom: 16px;
-            right: 16px;
+            bottom: 0;
+            right: 0;
+            width: 100%;
+            background: #fff;
+            padding: 8px 16px;
             display: flex;
-            gap: 8px;
+            justify-content: flex-end;
+            border-top: 1px solid #ddd;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
         }
 
         #btnApplySettings {
@@ -618,6 +644,48 @@
         #resultPanel .stats {
             line-height: 1.9
         }
+
+        /* テキスト移動指定のスタイル */
+        #planInput {
+            width: 10%;
+            /* 横幅を親要素に合わせる */
+            height: 100px;
+            /* 高さ */
+            padding: 8px;
+            /* 内側余白 */
+            font-family: monospace;
+            /* JSON向きの等幅フォント */
+            font-size: 14px;
+            /* 文字サイズ */
+            border: 1px solid #ccc;
+            /* 枠線 */
+            border-radius: 6px;
+            /* 角丸 */
+            background-color: #f9f9f9;
+            /* 背景色 */
+            resize: vertical;
+            /* 高さだけ調整可能、横幅は固定 */
+            overflow-y: auto;
+            /* 縦スクロール */
+        }
+
+        .plan-row {
+            display: flex;
+            align-items: flex-start;
+            /* 縦方向は上揃え */
+            justify-content: center;
+            /* 横方向中央揃え */
+            gap: 8px;
+            /* 要素間の隙間 */
+            margin-bottom: 12px;
+            /* 下に余白 */
+        }
+
+        /* 1フェーズ戻るのスタイル */
+        .undo-row {
+            text-align: center;
+            margin-top: 8px;
+        }
     </style>
 </head>
 
@@ -637,6 +705,7 @@
     </div>
 
     <div id="movedone">
+        <button id="exportBtn">移動プランナー生成</button>
         <button id="btnMoveDone" disabled>コマの移動を決定する</button>
     </div>
 
@@ -652,14 +721,21 @@
 
     <div id="underhub">
         <div class="undercard redCard">
-            赤ライフ: <span id="lifeRed">10</span> 勝利Pt: <span id="vpRed">0</span>
+            赤ライフ: <span id="lifeRed">10</span><br>勝利Pt: <span id="vpRed">0</span>
         </div>
         <div class="undercard blueCard">
-            青ライフ: <span id="lifeBlue">10</span> 勝利Pt: <span id="vpBlue">0</span>
+            青ライフ: <span id="lifeBlue">10</span><br>勝利Pt: <span id="vpBlue">0</span>
         </div>
     </div>
-
-    <button id="btnUndo" class="warn" disabled>（1フェーズ戻る）</button>
+    <p>移動プランナー</p>
+    <div class="plan-row">
+        <textarea id="planInput" placeholder='例{"Pawn1":{"x":2,"y":3}}'></textarea>
+        <button onclick="applyPlanFromText(document.getElementById('planInput').value)">プランナーを適用</button>
+        <button onclick="clearPlanInput()" class="warn">プランナーを削除</button>
+    </div>
+    <div class="undo-row">
+        <button id="btnUndo" class="warn" disabled>（1フェーズ戻る）</button>
+    </div>
 
     <!-- 設定モーダル -->
     <div id="settingsModal" class="modal">
@@ -679,9 +755,10 @@
                     <div class="row"><label>テンプレート</label>
                         <select id="inpTemplate">
                             <option value="none">（選択なし）</option>
-                            <option value="sampleA">サンプルA</option>
+                            <option value="reset">リセット</option>
                             <option value="vs6">6VS6</option>
                             <option value="vs4">4VS4</option>
+                            <option value="vs3d">3VS3デスマッチ</option>
                             <option value="debug1">デバッグ1</option>
                         </select>
                         <button id="btnApplyTemplate" class="secondary">テンプレ適用</button>
@@ -832,6 +909,27 @@
             </div>
         </div>
     </div>
+
+    <!-- テキスト仮移動指定エラーモーダル -->
+    <div id="planModal" class="modal" style="display:none;">
+        <div class="panel">
+            <span id="closeModal" style="cursor:pointer;">&times;</span>
+            <h3>以下のコマは移動できませんでした：</h3>
+            <ul id="modalList"></ul>
+        </div>
+    </div>
+
+    <!-- 文字列生成モーダル -->
+    <div id="planExportModal" class="modal">
+        <div class="panel">
+            <button class="closeX" id="closePlanExportModal">×</button>
+            <h2>以下のテキストをコピーしました</h2>
+            <pre id="planExportText"></pre>
+            <button id="copyAgainBtn">再度コピー</button>
+            <div id="copyNotice" class="notice" style="display:none;"></div>
+        </div>
+    </div>
+
 
 
     <script>
@@ -1243,6 +1341,128 @@
             clearSelection();
             renderBoardHighlights();
         }
+        //----------------
+        //現在の仮移動プランを JSON 文字列にして textarea に表示する関数
+        //----------------
+        // 文字列生成・コピー・モーダル表示
+        function exportPlanToClipboardAndShowModal() {
+            const planExportObj = {};
+            for (const p of Object.values(state.pieces)) {
+                if (p.alive && p.plan) {
+                    planExportObj[p.name] = { x: p.plan.x, y: p.plan.y };
+                }
+            }
+            const text = JSON.stringify(planExportObj, null, 2);
+
+            // コピー
+            copyTextToClipboard(text);
+
+            // モーダルに反映して表示
+            document.getElementById("planExportText").textContent = text;
+            document.getElementById("planExportModal").style.display = "flex";
+
+            // 「コマの移動を決定する」ボタンを有効化
+            document.getElementById("btnMoveDone").disabled = false;
+
+            // 通知を表示
+            showCopyNotice("テキストをコピーしました！");
+        }
+
+        // コピー再実行
+        function copyPlanAgain() {
+            const text = document.getElementById("planExportText").textContent;
+            copyTextToClipboard(text);
+            showCopyNotice("再度コピーしました！");
+        }
+
+        // モーダル閉じる
+        function closePlanModal() {
+            document.getElementById("planExportModal").style.display = "none";
+        }
+
+        // テキストをクリップボードにコピー
+        function copyTextToClipboard(text) {
+            navigator.clipboard.writeText(text).catch(err => {
+                console.error("コピー失敗", err);
+            });
+        }
+
+        // 通知表示（数秒で自動消滅）
+        function showCopyNotice(msg, replaceMsg = "対戦相手やGMにテキストを送ってください") {
+            const el = document.getElementById("copyNotice");
+            el.textContent = msg;
+            el.style.display = "block";
+
+            setTimeout(() => {
+                el.textContent = replaceMsg;  // 置き換えるテキスト
+                el.style.display = replaceMsg ? "block" : "none"; // 空文字なら非表示
+            }, 2000);
+        }
+
+        // イベント登録
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("exportBtn").addEventListener("click", exportPlanToClipboardAndShowModal);
+            document.getElementById("copyAgainBtn").addEventListener("click", copyPlanAgain);
+            document.getElementById("closePlanExportModal").addEventListener("click", closePlanModal);
+        });
+
+
+        //----------------
+        //テキスト仮移動指定エラーモーダル表示用関数
+        //----------------
+        function showModalForUnreachable(unreachablePieces) {
+            const listEl = document.getElementById('modalList');
+            listEl.innerHTML = ''; // リストをクリア
+
+            for (const p of unreachablePieces) {
+                const li = document.createElement('li');
+                li.textContent = `${p.name}（${p.type} / ${p.team === 'red' ? '赤' : '青'}）`;
+                listEl.appendChild(li);
+            }
+
+            const modal = document.getElementById('planModal');
+            modal.style.display = 'flex';
+
+            document.getElementById('closeModal').onclick = () => {
+                modal.style.display = 'none';
+            };
+        }
+
+        //----------------
+        //テキストから仮移動を適用する関数
+        //----------------
+        function applyPlanFromText(jsonText) {
+            let planObj;
+            try {
+                planObj = JSON.parse(jsonText);
+            } catch (e) {
+                alert("JSON解析に失敗しました。形式を確認してください。");
+                return;
+            }
+
+            const unreachable = [];
+
+            for (const [name, pos] of Object.entries(planObj)) {
+                const piece = Object.values(state.pieces).find(p => p.name === name && p.alive);
+                if (piece && pos.x != null && pos.y != null) {
+                    computeReachable(piece.id); // 可動範囲を更新
+                    if (reachable.has(`${pos.x},${pos.y}`)) {
+                        planMove(piece.id, pos.x, pos.y);
+                    } else {
+                        unreachable.push(piece);
+                    }
+                }
+            }
+
+            if (unreachable.length > 0) {
+                showModalForUnreachable(unreachable);
+            }
+        }
+        //テキストエリアの文字を消す
+        //----------------
+        function clearPlanInput() {
+            document.getElementById('planInput').value = '';
+        }
 
 
         function commitMoves() {
@@ -1568,17 +1788,16 @@
 
         /* テンプレート機構（内容は後で拡張可能） */
         const templates = {
-            sampleA: {
-                size: 8,
+            reset: {
+                size: 7,
+                turnLimit: 5,
+                life: { red: 5, blue: 5 },
+                kingAttackDamage: 1,
+                debug: false,
+                moveCost: { 'ポーン': 3, 'ナイト': 3, 'ビショップ': 4, 'ルーク': 4, 'クイーン': 5, 'キング': 3 },
                 cells: [
-                    { x: 0, y: 0, terrain: 'respawn-red' },
-                    { x: 7, y: 7, terrain: 'respawn-blue' }
                 ],
                 pieces: [
-                    { x: 1, y: 0, team: 'red', type: 'ポーン', name: 'R1' },
-                    { x: 2, y: 0, team: 'red', type: 'ビショップ', name: 'R2' },
-                    { x: 6, y: 7, team: 'blue', type: 'ポーン', name: 'B1' },
-                    { x: 5, y: 7, team: 'blue', type: 'ビショップ', name: 'B2' }
                 ]
             },
             vs6: {
@@ -1650,6 +1869,41 @@
                     { x: 6, y: 2, team: 'blue', type: 'クイーン', name: 'Bクイーン' },
                     { x: 6, y: 3, team: 'blue', type: 'キング', name: 'Bキング' },
                     { x: 6, y: 4, team: 'blue', type: 'ルーク', name: 'Bルーク' }
+                ]
+            },
+            vs3d: {
+                size: 5,
+                turnLimit: 5,
+                life: { red: 15, blue: 15 },
+                kingAttackDamage: 2,
+                debug: false,
+                moveCost: { 'ポーン': 3, 'ナイト': 3, 'ビショップ': 3, 'ルーク': 3, 'クイーン': 3, 'キング': 3 },
+
+                cells: [
+                    { x: 0, y: 1, terrain: 'respawn-red' },
+                    { x: 0, y: 2, terrain: 'respawn-red' },
+                    { x: 0, y: 3, terrain: 'respawn-red' },
+                    { x: 4, y: 1, terrain: 'respawn-blue' },
+                    { x: 4, y: 2, terrain: 'respawn-blue' },
+                    { x: 4, y: 3, terrain: 'respawn-blue' },
+                    { x: 0, y: 0, terrain: 'abyss' },
+                    { x: 1, y: 0, terrain: 'abyss' },
+                    { x: 2, y: 0, terrain: 'abyss' },
+                    { x: 3, y: 0, terrain: 'abyss' },
+                    { x: 4, y: 0, terrain: 'abyss' },
+                    { x: 0, y: 4, terrain: 'abyss' },
+                    { x: 1, y: 4, terrain: 'abyss' },
+                    { x: 2, y: 4, terrain: 'abyss' },
+                    { x: 3, y: 4, terrain: 'abyss' },
+                    { x: 4, y: 4, terrain: 'abyss' }
+                ],
+                pieces: [
+                    { x: 0, y: 1, team: 'red', type: 'キング', name: 'Rキング1' },
+                    { x: 0, y: 2, team: 'red', type: 'キング', name: 'Rキング2' },
+                    { x: 0, y: 3, team: 'red', type: 'キング', name: 'Rキング3' },
+                    { x: 2, y: 3, team: 'blue', type: 'キング', name: 'Bキング1' },
+                    { x: 2, y: 2, team: 'blue', type: 'キング', name: 'Bキング2' },
+                    { x: 2, y: 1, team: 'blue', type: 'キング', name: 'Bキング3' }
                 ]
             },
             debug1: {
@@ -1821,6 +2075,14 @@
         <p>ポーン、ナイト、ビショップ、ルーク、クイーン、キングの6種類のコマがあります。</p>
         <p>設定からコマごとに移動コストを設定することが可能です。</p>
         <p><b>キングがバトルに<span class="lose">敗北</span>した場合</b>、そのチームのライフが <span class="damage">1減ります</span>。</p>
+    `,
+            "移動プランナー": `
+        <h2>移動プランナー</h2>
+        <ul>
+        <li>移動プランナーを使えば、動かすコマの指定を対戦相手や<br>ゲームマスターに素早く伝えることができます。</li>
+        <li>コマの移動先を決めた後に移動プランナー生成を押すことで、<br>プランナーがコピーされます。</li>
+        <li>プランナーを下方にあるテキストエリアに張り付けた後、プランナーを適用を押すことでコマの移動先が表示されるようになります。</li>
+        </ul>
     `
         };
 
